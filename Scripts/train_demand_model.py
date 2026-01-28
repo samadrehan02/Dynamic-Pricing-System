@@ -9,31 +9,19 @@ import joblib
 MODEL_DIR = Path("models")
 MODEL_DIR.mkdir(exist_ok=True)
 
-# -----------------------------
-# Paths
-# -----------------------------
 RAW_DIR = Path("data/raw")
 PROCESSED_DIR = Path("data/processed")
 
-# -----------------------------
-# Load feature table
-# -----------------------------
 features = pd.read_csv(
     PROCESSED_DIR / "model_features.csv",
     parse_dates=["date"]
 )
 
-# -----------------------------
-# Load target (units_sold)
-# -----------------------------
 sales = pd.read_csv(
     RAW_DIR / "daily_sales.csv",
     parse_dates=["date"]
 )
 
-# -----------------------------
-# Join features with target
-# -----------------------------
 df = (
     features
     .merge(
@@ -45,9 +33,6 @@ df = (
     .reset_index(drop=True)
 )
 
-# -----------------------------
-# Rename target explicitly
-# -----------------------------
 df = df.rename(columns={"units_sold": "target_units_sold"})
 
 # -----------------------------
@@ -76,9 +61,6 @@ print(df[[
     "target_units_sold"
 ]].head(5))
 
-# -----------------------------
-# Create time index
-# -----------------------------
 df = df.sort_values("date").reset_index(drop=True)
 
 unique_dates = sorted(df["date"].unique())
@@ -129,9 +111,6 @@ for split in df["split"].unique():
         f"{split}: {sub['date'].min().date()} → {sub['date'].max().date()}"
     )
 
-# -----------------------------
-# Define feature columns
-# -----------------------------
 EXCLUDE_COLS = {
     "date",
     "product_id",
@@ -146,9 +125,6 @@ EXCLUDE_COLS = {
 
 FEATURE_COLS = [c for c in df.columns if c not in EXCLUDE_COLS]
 
-# -----------------------------
-# One-hot encode category
-# -----------------------------
 df = pd.get_dummies(df, columns=["category"], prefix="category")
 
 # Recompute feature columns after encoding
@@ -165,9 +141,6 @@ print(f"\nNumber of model features: {len(FEATURE_COLS)}")
 def wape(y_true, y_pred):
     return np.sum(np.abs(y_true - y_pred)) / np.sum(y_true)
 
-# -----------------------------
-# Walk-forward training (correct cumulative logic)
-# -----------------------------
 folds = [
     (["train_1"], "val_1"),
     (["train_1", "val_1"], "val_2"),
@@ -218,9 +191,6 @@ for i, (train_splits, val_split) in enumerate(folds, 1):
     metrics.append(fold_metrics)
     print(fold_metrics)
 
-# -----------------------------
-# Final training (all pre-test data)
-# -----------------------------
 final_train_df = df[df["split"] != "test"]
 test_df = df[df["split"] == "test"]
 
@@ -243,9 +213,6 @@ final_model = xgb.XGBRegressor(
 
 final_model.fit(X_final_train, y_final_train)
 
-# -----------------------------
-# Test set prediction
-# -----------------------------
 test_preds = final_model.predict(X_test)
 test_preds = np.clip(test_preds, 0, None)
 
@@ -256,17 +223,11 @@ print("\n===== Test Set Performance =====")
 print(f"Test WAPE: {test_wape:.4f}")
 print(f"Test Bias: {test_bias:.4f}")
 
-# -----------------------------
-# Save model
-# -----------------------------
 model_path = MODEL_DIR / "demand_xgb.pkl"
 joblib.dump(final_model, model_path)
 
 print(f"\nModel saved to {model_path.resolve()}")
 
-# -----------------------------
-# Save demand predictions
-# -----------------------------
 predictions_df = test_df[["date", "product_id"]].copy()
 predictions_df["predicted_units_sold"] = test_preds
 

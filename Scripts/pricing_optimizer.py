@@ -1,8 +1,5 @@
 import numpy as np
 
-# -----------------------------
-# Pricing configuration (from pricing_spec.md)
-# -----------------------------
 MIN_MARGIN_PCT = 0.15
 MAX_DAILY_PRICE_CHANGE_PCT = 0.05
 
@@ -15,9 +12,6 @@ CANDIDATE_MULTIPLIERS = [
     1.05
 ]
 
-# -----------------------------
-# Step 5.1: Candidate Price Generation
-# -----------------------------
 def generate_candidate_prices(prev_price, cost_price):
     """
     Generate candidate prices around the previous price
@@ -46,9 +40,6 @@ def generate_candidate_prices(prev_price, cost_price):
 
     return sorted(set(candidates))
 
-# -----------------------------
-# Elasticity configuration (category-level)
-# -----------------------------
 CATEGORY_ELASTICITY = {
     "grocery": -1.5,
     "personal_care": -1.2,
@@ -56,9 +47,6 @@ CATEGORY_ELASTICITY = {
     "home": -0.6,
 }
 
-# -----------------------------
-# Step 5.2: Demand & Revenue Estimation
-# -----------------------------
 def estimate_demand_and_revenue(
     candidate_price,
     prev_price,
@@ -86,15 +74,9 @@ def estimate_demand_and_revenue(
         "expected_revenue": round(expected_revenue, 2),
     }
 
-# -----------------------------
-# Inventory constraint config
-# -----------------------------
 STOCKOUT_BUFFER_DAYS = 3
 CLEARANCE_WARNING_DAYS = 14
 
-# -----------------------------
-# Step 5.3: Constraint Enforcement
-# -----------------------------
 def is_candidate_price_valid(
     candidate_price,
     prev_price,
@@ -130,9 +112,6 @@ def is_candidate_price_valid(
 
     return True
 
-# -----------------------------
-# Step 5.4: Final Price Selection
-# -----------------------------
 def select_optimal_price(
     prev_price,
     cost_price,
