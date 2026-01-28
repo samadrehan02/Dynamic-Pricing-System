@@ -1,0 +1,72 @@
+# ================================
+# Python
+# ================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# ================================
+# OS / Editor
+# ================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ================================
+# Jupyter / Interactive
+# ================================
+.ipynb_checkpoints/
+
+# ================================
+# Model Artifacts
+# ================================
+models/*.pkl
+models/*.joblib
+
+# ================================
+# Generated Data
+# ================================
+data/processed/*.csv
+data/processed/*.parquet
+
+# Keep raw data if needed
+!data/raw/
+!data/raw/*.csv
+
+# ================================
+# Evaluation Outputs
+# ================================
+evaluation_outputs/
+*.png
+*.jpg
+*.svg
+
+# ================================
+# Logs & Monitoring
+# ================================
+logs/
+*.log
+
+# ================================
+# Temporary / Debug
+# ================================
+*.tmp
+*.bak
+*.swp
+
+# ================================
+# Environment / Secrets
+# ================================
+.env
+.env.*
