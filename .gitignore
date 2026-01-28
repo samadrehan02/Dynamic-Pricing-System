@@ -45,12 +45,13 @@ data/processed/*.parquet
 !data/raw/*.csv
 
 # ================================
-# Evaluation Outputs
+# Evaluation Outputs (Tracked)
 # ================================
-evaluation_outputs/
-*.png
-*.jpg
-*.svg
+!evaluation_outputs/
+!evaluation_outputs/**/*.png
+!evaluation_outputs/**/*.jpg
+!evaluation_outputs/**/*.svg
+
 
 # ================================
 # Logs & Monitoring
