@@ -1,6 +1,6 @@
-# ================================
+# =========================
 # Python
-# ================================
+# =========================
 __pycache__/
 *.py[cod]
 *.pyo
@@ -8,66 +8,82 @@ __pycache__/
 *.so
 *.egg-info/
 .eggs/
-.pytest_cache/
 
-# Virtual environments
+# =========================
+# Virtual Environments
+# =========================
 .venv/
 venv/
 env/
 
-# ================================
-# OS / Editor
-# ================================
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
+# =========================
+# Environment Variables
+# =========================
+.env
+.env.*
+!.env.example
 
-# ================================
-# Jupyter / Interactive
-# ================================
-.ipynb_checkpoints/
-
-# ================================
-# Model Artifacts
-# ================================
-models/*.pkl
-models/*.joblib
-
-# ================================
-# Generated Data
-# ================================
-data/processed/*.csv
-data/processed/*.parquet
-
-# Keep raw data if needed
-!data/raw/
-!data/raw/*.csv
-
-# ================================
-# Evaluation Outputs (Tracked)
-# ================================
-!evaluation_outputs/
-!evaluation_outputs/**/*.png
-!evaluation_outputs/**/*.jpg
-!evaluation_outputs/**/*.svg
-
-
-# ================================
-# Logs & Monitoring
-# ================================
+# =========================
+# Logs
+# =========================
 logs/
 *.log
 
-# ================================
-# Temporary / Debug
-# ================================
-*.tmp
-*.bak
-*.swp
+# =========================
+# Databases / Local Data
+# =========================
+*.db
+*.sqlite3
+data/
+tmp/
 
-# ================================
-# Environment / Secrets
-# ================================
-.env
-.env.*
+# =========================
+# OS / Editor Noise
+# =========================
+.DS_Store
+Thumbs.db
+
+.vscode/
+.idea/
+
+# =========================
+# Jupyter / Experiments
+# =========================
+.ipynb_checkpoints/
+notebooks/
+
+# =========================
+# Build / Distribution
+# =========================
+build/
+dist/
+*.whl
+
+# =========================
+# Model Artifacts
+# =========================
+models/
+checkpoints/
+artifacts/
+
+# =========================
+# Frontend (if added later)
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Test / Coverage
+# =========================
+.coverage
+htmlcov/
+.pytest_cache/
+
+# =========================
+# Secrets
+# =========================
+*.pem
+*.key
+*.crt

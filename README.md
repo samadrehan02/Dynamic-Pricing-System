@@ -1,252 +1,250 @@
-# Dynamic Pricing System for Retail Stores
+# 📈 Intelligent Pricing System with Human-in-the-Loop Controls
 
 ## Overview
 
-This project implements a production-grade dynamic pricing system
-for a general department store. The system combines demand forecasting,
-constraint-based pricing optimization, offline simulation, and
-post-deployment monitoring design.
+This project implements a **production-style dynamic pricing system** that combines:
 
-The goal is to optimize revenue and inventory turnover while respecting
-real-world business constraints such as margin limits, price change caps,
-clearance deadlines, and stock-out avoidance.
+* machine-learning–based price optimization
+* deterministic batch execution
+* human safety controls (price freezes, rule-based fallbacks)
+* monitoring, alerting, and explainability
+* a Material-inspired operational UI
 
----
-
-## Problem Definition
-
-For each product (SKU) and day, the system determines an optimal selling price
-based on:
-
-- Historical sales patterns
-- Current price context
-- Inventory levels
-- Demand forecasts
-- Seasonality and promotions
-
-### Objectives
-- Maximize revenue
-- Avoid stock-outs
-- Improve inventory turnover
-- Ensure clearance before expiry deadlines
-
-### Constraints
-- Minimum margin per SKU
-- Maximum daily price change
-- Inventory safety buffers
-- Clearance enforcement
+The system is designed to be **auditable, reproducible, and safe**, following patterns used in real-world pricing and ML systems.
 
 ---
 
-## Data Design
+## High-Level Architecture
 
-Synthetic but realistic retail data is used, including:
-
-- Product metadata (category, cost, clearance window)
-- Daily sales history
-- Daily inventory snapshots
-- Price history
-- Promotion flags
-- Calendar features
-
-All data is generated deterministically to avoid leakage and ensure
-reproducibility.
-
----
-
-## Feature Engineering
-
-Key features include:
-
-- Lagged sales features (1, 7, 14 days)
-- Rolling demand statistics
-- Relative price features
-- Inventory pressure indicators
-- One-hot encoded seasonality
-- Promotion indicators
-
-Feature construction strictly uses past information only.
-
----
-
-## Demand Forecasting
-
-A two-stage approach is used.
-
-### Model
-- XGBoost regressor
-- Predicts next-day units sold per SKU
-
-### Validation
-- Walk-forward time-based validation
-- Bias and overforecast monitoring
-- No random shuffling
-
-### Outputs
-- Daily demand predictions for test period
-- Persisted model artifact
+```
+                ┌────────────────────┐
+                │   Feature Job       │
+                │  (daily batch)      │
+                └─────────┬──────────┘
+                          │
+                          ▼
+                ┌────────────────────┐
+                │ feature_snapshots   │
+                │ (daily snapshots)   │
+                └─────────┬──────────┘
+                          │
+                ┌─────────▼──────────┐
+                │  Pricing Job        │
+                │  (daily batch)      │
+                │                     │
+                │  - checks overrides │
+                │  - selects strategy │
+                │  - runs optimizer   │
+                └─────────┬──────────┘
+                          │
+                          ▼
+                ┌────────────────────┐
+                │ pricing_decisions   │
+                │ (audit trail)       │
+                └─────────┬──────────┘
+                          │
+        ┌─────────────────▼─────────────────┐
+        │             FastAPI                │
+        │  - health & status                 │
+        │  - alerts                          │
+        │  - SKU explainability              │
+        └─────────┬─────────────────────────┘
+                  │
+        ┌─────────▼──────────┐
+        │   Flask UI         │
+        │  (Material-style) │
+        │                   │
+        │  - dashboards     │
+        │  - admin controls │
+        └──────────────────┘
+```
 
 ---
 
-## Pricing Optimization
+## Core Design Principles
 
-Pricing decisions are fully deterministic and explainable.
+### 1. Deterministic Batch Execution
 
-### Steps
-1. Generate candidate prices around previous price
-2. Estimate demand response using conservative elasticity proxies
-3. Enforce hard business constraints
-4. Select price with maximum expected revenue
-5. Apply safe fallback if no valid candidate exists
+* Pricing runs as a **batch job**, not via APIs
+* All inputs are snapshotted before execution
+* Pricing decisions are reproducible and replayable
 
-No black-box price prediction is used.
+### 2. Separation of Concerns
 
----
+* **Feature generation** ≠ pricing
+* **Pricing execution** ≠ UI
+* **UI** never directly controls pricing logic
 
-## Offline Evaluation
+### 3. Human-in-the-Loop Safety
 
-Three pricing strategies are compared via replay simulation:
+* Ops can freeze pricing or force rule-based strategies
+* Overrides are stored as facts in the database
+* Pricing enforces overrides at execution time
 
-- Static pricing (no change)
-- Rule-based pricing (inventory heuristics)
-- ML-driven pricing (demand-aware optimization)
+### 4. Auditability & Explainability
 
-Evaluation metrics include:
-- Total revenue
-- Revenue per SKU-day
-- Stock-out rate
-- Units sold
-
-Simulation uses forecast-as-truth demand to validate pricing safety.
+* Every price decision is stored
+* Explainability metadata is persisted and visible in the UI
+* Historical price trends are viewable per SKU
 
 ---
 
-## Monitoring & Drift Detection
+## System Components
 
-The system design includes monitoring for:
+### Daily Feature Job
 
-- Input drift (PSI on key features)
-- Prediction drift (bias, variance, overforecast rate)
-- Outcome drift (revenue, stock-outs, clearance misses)
+**File:** `backend/feature_job.py`
 
-Clear thresholds, alerts, fallbacks, and retraining triggers are defined.
-
-ML pricing never overrides business safety rules.
-
----
-
-## Retraining Strategy
-
-- Scheduled weekly retraining
-- Event-driven retraining on drift or KPI degradation
-- Demand model retraining only
-- Pricing constraints remain fixed
-
-All retraining events are logged and auditable.
+* Runs once per day
+* Computes pricing features (inventory, demand, trends, etc.)
+* Writes one row per SKU into `feature_snapshots`
+* Guarantees reproducibility and prevents data leakage
 
 ---
 
-## Project Structure
+### Daily Pricing Job
 
-Scripts/
-├─ pricing_optimizer.py
-├─ train_demand_model.py
-├─ simulation/
-│ ├─ data_loader.py
-│ ├─ strategies.py
-│ ├─ simulator.py
-│ └─ metrics.py
+**File:** `backend/pricing_job.py`
 
----
+* Runs once per day after feature generation
+* Reads `feature_snapshots`
+* Enforces active manual overrides
+* Selects pricing strategy:
 
-## Key Takeaways
-
-- Emphasis on correctness and safety over complexity
-- Clear separation of ML and business logic
-- Deterministic, auditable pricing decisions
-- Production-oriented evaluation and monitoring design
-
-This project reflects how real-world retail pricing systems are built,
-validated, and operated.
-
-<!-- EVALUATION_RESULTS_START -->
-
-## Offline Evaluation & Visualizations
-
-This section presents the results of an offline pricing simulation comparing
-three strategies:
-
-- **Static pricing** (no changes)
-- **Rule-based pricing** (inventory heuristics)
-- **ML-driven pricing** (demand-aware optimization)
-
-The evaluation is run on a held-out test window using forecast-as-truth demand
-to validate pricing safety and stability.
+  * ML pricing
+  * Rule-based fallback
+  * Static pricing (freeze)
+* Writes results to `pricing_decisions`
 
 ---
 
-### Overall Strategy Comparison
+### Pricing Optimizer
 
-**Total Revenue by Strategy**
+**File:** `backend/pricing_runner.py`
 
-![Total Revenue](evaluation_outputs/total_revenue_by_strategy.png)
-
-**Revenue Uplift vs Static Pricing**
-
-![Revenue Uplift](evaluation_outputs/revenue_uplift_vs_static.png)
-
-**Stock-out Rate by Strategy**
-
-![Stock-out Rate](evaluation_outputs/stockout_rate_by_strategy.png)
-
-**Daily Revenue Over Time**
-
-![Daily Revenue](evaluation_outputs/daily_revenue_over_time.png)
-
-**Price Distribution by Strategy**
-
-![Price Distribution](evaluation_outputs/price_distribution_by_strategy.png)
+* Calls the ML pricing optimizer
+* Applies constraints (margins, inventory)
+* Persists final prices and explainability
 
 ---
 
-### Category-Level Analysis
+### Monitoring & APIs
 
-To understand where pricing strategies behave differently, results are broken
-down by product category.
+**Framework:** FastAPI
 
-**Revenue by Category and Strategy**
+Provides:
 
-- Grocery  
-  ![Grocery Revenue](evaluation_outputs/category_breakdown/revenue_grocery.png)
+* System health summary
+* Global pricing status (ML active / frozen)
+* Alerts
+* SKU-level pricing decisions and history
 
-- Home  
-  ![Home Revenue](evaluation_outputs/category_breakdown/revenue_home.png)
-
-**Stock-out Rate by Category**
-
-- Grocery  
-  ![Grocery Stockout](evaluation_outputs/category_breakdown/stockout_grocery.png)
-
-- Home  
-  ![Home Stockout](evaluation_outputs/category_breakdown/stockout_home.png)
-
-**Average Price by Category**
-
-- Grocery  
-  ![Grocery Avg Price](evaluation_outputs/category_breakdown/avg_price_grocery.png)
-
-- Home  
-  ![Home Avg Price](evaluation_outputs/category_breakdown/avg_price_home.png)
+FastAPI is **read-only** and defines the system’s data contract.
 
 ---
 
-### Interpretation Notes
+### Admin & Operations UI
 
-- Under fixed-demand evaluation, **static pricing is optimal by definition**
-- ML-driven pricing behaves conservatively, respecting all constraints
-- Stock-out rates remain stable across strategies
-- Category-level plots reveal where demand sensitivity differs
+**Framework:** Flask (server-rendered)
 
-Elastic-demand simulations can be used separately to estimate revenue uplift.
+Material-inspired internal UI with:
 
-<!-- EVALUATION_RESULTS_END -->
+* System health dashboard
+* Alerts table
+* SKU explorer with explainability & price history
+* Admin controls (freeze / unfreeze pricing)
+* Global status banner reflecting execution state
+
+The UI:
+
+* Reads state from FastAPI
+* Writes intent via admin endpoints
+* Never directly controls pricing execution
+
+---
+
+## Manual Overrides
+
+Overrides are stored in `manual_overrides` and enforced by the pricing job.
+
+Supported overrides:
+
+* `PRICE_FREEZE` → static pricing
+* `FORCE_RULE_BASED` → disable ML pricing
+
+Overrides:
+
+* are auditable
+* can expire automatically
+* affect pricing only at execution time
+
+---
+
+## Model Retraining Workflow
+
+Retraining is **not automatic**.
+
+Flow:
+
+1. Monitoring detects degradation
+2. Retraining event is created
+3. Human approves retraining
+4. `retraining_job.py` executes:
+
+   * trains model
+   * validates performance
+   * registers new version
+
+This prevents silent model regressions.
+
+---
+
+## Scheduling
+
+Example daily schedule:
+
+| Time  | Job         |
+| ----- | ----------- |
+| 02:00 | Feature Job |
+| 02:10 | Pricing Job |
+
+Both jobs can be scheduled using:
+
+* Windows Task Scheduler
+* Cron
+* Airflow
+* Kubernetes Jobs
+
+---
+
+## Why This Design Works
+
+* Prevents accidental price changes
+* Allows safe human intervention
+* Scales to large SKU counts
+* Matches real-world pricing architectures
+* Interviewers can reason about every decision
+
+---
+
+## How to Explain This in One Minute
+
+> “Pricing runs as a deterministic batch job that consumes daily feature snapshots and enforces human overrides.
+> The UI records intent and displays state, but execution is isolated and auditable.
+> This ensures safety, reproducibility, and explainability.”
+
+---
+
+## Future Extensions
+
+* Real sales & inventory joins
+* Shadow pricing evaluation
+* Model registry & versioning
+* Role-based access control
+* SLA monitoring
+
+---
+
+## Status
+
+**Architecture complete and production-ready.**

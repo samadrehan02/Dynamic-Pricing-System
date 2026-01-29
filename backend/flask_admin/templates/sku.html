@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>SKU Explorer</h2>
+
+<form method="get" style="margin-bottom:24px; display:flex; gap:12px;">
+    <input
+        type="text"
+        name="sku"
+        placeholder="Enter SKU (e.g. SKU_001)"
+        value="{{ sku or '' }}"
+        required
+        style="min-width:240px;"
+    />
+    <button type="submit">Search</button>
+</form>
+
+{% if error %}
+    <p style="color:#d93025;">{{ error }}</p>
+{% endif %}
+
+{% if decision %}
+
+<div class="grid">
+
+    <!-- Pricing Summary -->
+    <div class="card">
+        <h3>Pricing Decision</h3>
+
+        <p class="muted">SKU</p>
+        <p><b>{{ decision.product_id }}</b></p>
+
+        <p class="muted">Decision Date</p>
+        <p>{{ decision.decision_date }}</p>
+
+        <p class="muted">Strategy</p>
+        <p>
+            <span class="chip blue">{{ decision.strategy }}</span>
+        </p>
+
+        <p class="muted">Previous Price</p>
+        <p>{{ decision.prev_price }}</p>
+
+        <p class="muted">Final Price</p>
+        <p>
+            <span class="chip green">{{ decision.final_price }}</span>
+        </p>
+
+        <p class="muted">Reason</p>
+        <p>{{ decision.reason }}</p>
+    </div>
+
+    <!-- Price History -->
+    <div class="card">
+        <h3>Price History</h3>
+        <canvas id="priceChart" height="140"></canvas>
+        <p class="muted" style="margin-top:8px;">
+            Final price over time
+        </p>
+    </div>
+
+</div>
+
+<!-- Explainability -->
+{% if decision.explainability %}
+<div class="card" style="margin-top:24px;">
+    <details>
+        <summary class="muted">
+            Explainability (click to expand)
+        </summary>
+        <pre style="margin-top:12px;">
+{{ decision.explainability | tojson(indent=2) }}
+        </pre>
+    </details>
+</div>
+{% endif %}
+
+{% endif %}
+
+{% endblock %}

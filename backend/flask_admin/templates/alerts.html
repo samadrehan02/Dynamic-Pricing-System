@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Active Alerts</h2>
+
+{% if alerts|length == 0 %}
+  <p class="muted">No active alerts.</p>
+{% else %}
+  <div class="card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Severity</th>
+          <th>Message</th>
+          <th>First Seen</th>
+          <th>Last Seen</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in alerts %}
+          <tr>
+            <td>{{ a.type }}</td>
+            <td>
+              {% if a.severity == "critical" %}
+                <span class="chip red">CRITICAL</span>
+              {% elif a.severity == "warning" %}
+                <span class="chip yellow">WARNING</span>
+              {% else %}
+                <span class="chip blue">INFO</span>
+              {% endif %}
+            </td>
+            <td class="muted">{{ a.message }}</td>
+            <td>{{ a.first_seen }}</td>
+            <td>{{ a.last_seen }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+
+{% endblock %}

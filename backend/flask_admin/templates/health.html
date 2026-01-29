@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>System Health</h2>
+
+<div class="grid">
+    <div class="card">
+        <div class="muted">Active Strategy</div>
+        <div class="kpi">
+            <span class="chip blue">{{ health.active_strategy }}</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="muted">Revenue Δ</div>
+        <div class="kpi">{{ health.revenue_delta_pct }}%</div>
+    </div>
+
+    <div class="card">
+        <div class="muted">Stockout Rate</div>
+        <div class="kpi">{{ health.stockout_rate }}</div>
+    </div>
+
+    <div class="card">
+        <div class="muted">Active Alerts</div>
+        <div class="kpi">
+            {% if health.active_alerts > 0 %}
+                <span class="chip red">{{ health.active_alerts }}</span>
+            {% else %}
+                <span class="badge green">0</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

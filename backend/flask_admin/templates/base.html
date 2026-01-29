@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pricing Ops</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="app-shell">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Side Navigation -->
+    <aside class="sidebar">
+        <div class="sidebar-title">Pricing Ops</div>
+
+        <nav class="nav">
+            <a href="/">System Health</a>
+            <a href="/alerts">Alerts</a>
+            <a href="/sku">SKU Explorer</a>
+            <a href="/admin">Admin</a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+
+        {% if system_status %}
+            <div class="status-banner {{ system_status.state }}">
+                {{ system_status.message }}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+
+    </main>
+
+</div>
+
+</body>
+</html>
