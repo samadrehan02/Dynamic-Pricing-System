@@ -248,3 +248,12 @@ details summary {
 .status-banner.ml_active {
   display: none;
 }
+.chart-card {
+  height: 280px;            /* fixed Material-style height */
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-card canvas {
+  flex: 1;
+}
